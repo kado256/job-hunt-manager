@@ -10,21 +10,23 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body class="app-body">
 
-  <header>
-    <h1>就活管理アプリ</h1>
-    <p>企業情報を登録</p>
+  <header class="app-header">
+    <div class="header-container">
+      <h1 class="app-title">就活管理アプリ</h1>
+      <p class="app-subtitle">企業情報を登録・編集</p>
+    </div>
   </header>
 
-  <main>
+  <main class="main-container form-page-container">
 
-    <section>
+    <section class="form-card">
       <h2 id="form-title">企業を追加</h2>
 
       <form id="company-form">
 
-        <div>
+        <div class="form-group">
           <label for="company-name">企業名</label>
           <input
             type="text"
@@ -34,7 +36,7 @@
           >
         </div>
 
-        <div>
+        <div class="form-group">
           <label for="industry">業界</label>
           <select id="industry" name="industry">
             <option value="">選択してください</option>
@@ -47,7 +49,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="form-group">
           <label for="deadline">ES締切</label>
           <input
             type="date"
@@ -56,7 +58,7 @@
           >
         </div>
 
-        <div>
+        <div class="form-group">
           <label for="status">選考状況</label>
           <select id="status" name="status">
             <option value="未エントリー">未エントリー</option>
@@ -69,7 +71,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="form-group">
           <label for="priority">志望度</label>
           <select id="priority" name="priority">
             <option value="1">★</option>
@@ -78,7 +80,7 @@
           </select>
         </div>
 
-        <div>
+        <div class="form-group">
           <label for="mypage-url">マイページURL</label>
           <input
             type="url"
@@ -88,22 +90,21 @@
           >
         </div>
 
-        <div>
+        <div class="form-group">
           <label for="memo">メモ</label>
           <textarea
             id="memo"
             name="memo"
-            rows="5"
+            rows="4"
           ></textarea>
         </div>
 
-        <button type="submit" id="submit-btn">登録</button>
+        <div class="form-actions">
+          <button type="submit" id="submit-btn" class="btn btn-primary btn-block">登録</button>
+          <a href="index.html" class="btn btn-secondary btn-block">企業一覧に戻る</a>
+        </div>
 
       </form>
-
-      <p>
-        <a href="index.html">企業一覧に戻る</a>
-      </p>
 
     </section>
 

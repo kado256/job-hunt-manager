@@ -9,22 +9,24 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body class="app-body">
 
-  <header>
-    <h1>就活管理アプリ</h1>
-    <p>企業情報やES締切、選考状況をまとめて管理</p>
+  <header class="app-header">
+    <div class="header-container">
+      <h1 class="app-title">就活管理アプリ</h1>
+      <p class="app-subtitle">企業情報やES締切、選考状況をまとめて管理</p>
+    </div>
   </header>
 
-  <main>
+  <main class="main-container">
 
-    <section>
+    <section class="action-bar">
       <h2>企業一覧</h2>
 
-      <a href="company-form.html">＋ 企業を追加</a>
+      <a href="company-form.html" class="btn btn-primary">＋ 企業を追加</a>
     </section>
 
-    <section id="search-filter-section">
+    <section id="search-filter-section" class="filter-card">
       <div class="filter-group">
         <label for="search-input">企業名検索</label>
         <input type="search" id="search-input" placeholder="企業名で検索...">

@@ -122,22 +122,26 @@ function renderCompanies() {
         }
 
         const name = document.createElement("h3");
+        name.className = "card-title";
         name.textContent = company.name;
 
         const industry = document.createElement("p");
+        industry.className = "card-meta card-industry";
         industry.textContent =
             "業界：" + (company.industry || "未設定");
 
         const deadline = document.createElement("p");
-        deadline.className = "deadline-text " + (deadlineInfo.status === "urgent" ? "urgent" : "");
+        deadline.className = "card-meta deadline-text " + (deadlineInfo.status === "urgent" ? "urgent" : "") + (deadlineInfo.status === "expired" ? "expired" : "");
         deadline.textContent =
             "ES締切：" + deadlineInfo.text;
 
         const status = document.createElement("p");
+        status.className = "card-meta card-status";
         status.textContent =
             "選考状況：" + company.status;
 
         const priority = document.createElement("p");
+        priority.className = "card-meta card-priority";
         priority.textContent =
             "志望度：" + "★".repeat(company.priority);
 
@@ -147,24 +151,38 @@ function renderCompanies() {
         article.appendChild(status);
         article.appendChild(priority);
 
+        if (company.memo) {
+            const memo = document.createElement("p");
+            memo.className = "card-memo";
+            memo.textContent = "メモ：" + company.memo;
+            article.appendChild(memo);
+        }
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "card-actions";
+
         if (company.myPageUrl) {
             const myPageLink = document.createElement("a");
 
             myPageLink.href = company.myPageUrl;
             myPageLink.textContent = "マイページ";
+            myPageLink.className = "btn btn-sm btn-outline";
             myPageLink.target = "_blank";
             myPageLink.rel = "noopener noreferrer";
 
-            article.appendChild(myPageLink);
+            actionsDiv.appendChild(myPageLink);
         }
 
         const editButton = document.createElement("a");
         editButton.href = "company-form.html?id=" + company.id;
         editButton.textContent = "編集";
-        article.appendChild(editButton);
+        editButton.className = "btn btn-sm btn-edit";
+        actionsDiv.appendChild(editButton);
 
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "削除";
+        deleteButton.className = "btn btn-sm btn-delete";
+        deleteButton.type = "button";
 
         deleteButton.addEventListener("click", function () {
             const confirmed = confirm(
@@ -188,7 +206,8 @@ function renderCompanies() {
             renderCompanies();
         });
 
-        article.appendChild(deleteButton);
+        actionsDiv.appendChild(deleteButton);
+        article.appendChild(actionsDiv);
 
         companyList.appendChild(article);
     });
