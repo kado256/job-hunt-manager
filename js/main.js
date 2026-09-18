@@ -48,6 +48,11 @@ if (companies.length === 0) {
             article.appendChild(myPageLink);
         }
 
+        const editButton = document.createElement("a");
+        editButton.href = "company-form.html?id=" + company.id;
+        editButton.textContent = "編集";
+        article.appendChild(editButton);
+
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "削除";
 
