@@ -264,3 +264,9 @@ job-hunt-manager/
 ```text
 docs/implementation_plan.md
 ```
+
+## 🌐 デモ
+
+https://kado256.github.io/job-hunt-manager/
+
+ブラウザからそのまま利用できます。
