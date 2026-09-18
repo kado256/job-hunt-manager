@@ -1,15 +1,42 @@
 const companyList = document.getElementById("company-list");
+const searchInput = document.getElementById("search-input");
+const filterIndustry = document.getElementById("filter-industry");
+const filterStatus = document.getElementById("filter-status");
 
-const companies =
-    JSON.parse(localStorage.getItem("companies")) || [];
+function getCompanies() {
+    return JSON.parse(localStorage.getItem("companies")) || [];
+}
 
-if (companies.length === 0) {
-    const message = document.createElement("p");
-    message.textContent = "登録された企業はありません。";
+function renderCompanies() {
+    const companies = getCompanies();
+    companyList.innerHTML = "";
 
-    companyList.appendChild(message);
-} else {
-    companies.forEach(function (company) {
+    if (companies.length === 0) {
+        const message = document.createElement("p");
+        message.textContent = "登録された企業はありません。";
+        companyList.appendChild(message);
+        return;
+    }
+
+    const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const selectedIndustry = filterIndustry ? filterIndustry.value : "";
+    const selectedStatus = filterStatus ? filterStatus.value : "";
+
+    const filteredCompanies = companies.filter(function (company) {
+        const matchesKeyword = !keyword || (company.name && company.name.toLowerCase().includes(keyword));
+        const matchesIndustry = !selectedIndustry || company.industry === selectedIndustry;
+        const matchesStatus = !selectedStatus || company.status === selectedStatus;
+        return matchesKeyword && matchesIndustry && matchesStatus;
+    });
+
+    if (filteredCompanies.length === 0) {
+        const message = document.createElement("p");
+        message.textContent = "条件に一致する企業は見つかりませんでした。";
+        companyList.appendChild(message);
+        return;
+    }
+
+    filteredCompanies.forEach(function (company) {
         const article = document.createElement("article");
 
         const name = document.createElement("h3");
@@ -65,7 +92,8 @@ if (companies.length === 0) {
                 return;
             }
 
-            const updatedCompanies = companies.filter(function (item) {
+            const currentCompanies = getCompanies();
+            const updatedCompanies = currentCompanies.filter(function (item) {
                 return item.id !== company.id;
             });
 
@@ -74,7 +102,7 @@ if (companies.length === 0) {
                 JSON.stringify(updatedCompanies)
             );
 
-            window.location.reload();
+            renderCompanies();
         });
 
         article.appendChild(deleteButton);
@@ -82,3 +110,15 @@ if (companies.length === 0) {
         companyList.appendChild(article);
     });
 }
+
+if (searchInput) {
+    searchInput.addEventListener("input", renderCompanies);
+}
+if (filterIndustry) {
+    filterIndustry.addEventListener("change", renderCompanies);
+}
+if (filterStatus) {
+    filterStatus.addEventListener("change", renderCompanies);
+}
+
+renderCompanies();
