@@ -74,6 +74,94 @@
     </section>
 
   </main>
+
+  <!-- 予定登録・編集モーダル -->
+  <dialog id="event-form-modal" class="app-modal">
+    <div class="modal-header">
+      <h3 id="event-modal-title">予定を追加</h3>
+      <button type="button" id="close-event-form-btn" class="modal-close-btn" aria-label="閉じる">&times;</button>
+    </div>
+    <form id="event-form" class="modal-body">
+      <input type="hidden" id="event-id" name="id">
+      <input type="hidden" id="event-company-id" name="companyId">
+
+      <div class="form-group">
+        <label>対象企業</label>
+        <p id="event-company-name-display" class="modal-company-name"></p>
+      </div>
+
+      <div class="form-group">
+        <label for="event-type">予定種別</label>
+        <select id="event-type" name="type" required>
+          <option value="面接">面接</option>
+          <option value="ES締切">ES締切</option>
+          <option value="Webテスト">Webテスト</option>
+          <option value="説明会">説明会</option>
+          <option value="インターン">インターン</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="event-title">タイトル</label>
+        <input type="text" id="event-title" name="title" placeholder="例: 1次面接、会社説明会" required>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label>
+          <input type="checkbox" id="event-all-day" name="allDay">
+          終日予定
+        </label>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="event-start">開始日時</label>
+          <input type="datetime-local" id="event-start" name="start" required>
+        </div>
+        <div class="form-group">
+          <label for="event-end">終了日時</label>
+          <input type="datetime-local" id="event-end" name="end">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="event-location">場所</label>
+        <input type="text" id="event-location" name="location" placeholder="例: オンライン(Zoom)、本社6F">
+      </div>
+
+      <div class="form-group">
+        <label for="event-memo">メモ</label>
+        <textarea id="event-memo" name="memo" rows="3" placeholder="Zoomリンク、持ち物、逆質問メモなど"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" id="save-event-btn" class="btn btn-primary">保存する</button>
+        <button type="button" id="cancel-event-form-btn" class="btn btn-secondary">キャンセル</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 予定一覧モーダル -->
+  <dialog id="event-list-modal" class="app-modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="event-list-modal-title">予定一覧</h3>
+        <p id="event-list-company-name" class="modal-subtitle"></p>
+      </div>
+      <button type="button" id="close-event-list-btn" class="modal-close-btn" aria-label="閉じる">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-top-action">
+        <button type="button" id="modal-add-event-btn" class="btn btn-primary btn-sm">＋ 予定を追加</button>
+      </div>
+      <div id="modal-events-container" class="events-list">
+        <!-- 予定アイテムが動的挿入される -->
+      </div>
+    </div>
+  </dialog>
+
+  <script src="js/events.js"></script>
   <script src="js/main.js"></script>
 
 </body>
