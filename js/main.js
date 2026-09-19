@@ -158,8 +158,48 @@ function renderCompanies() {
             article.appendChild(memo);
         }
 
+        // 直近予定のサマリー表示 (Phase 1)
+        const upcomingEvent = typeof getUpcomingEvent === "function" ? getUpcomingEvent(company.id) : null;
+        if (upcomingEvent) {
+            const upcomingP = document.createElement("p");
+            upcomingP.className = "card-meta card-upcoming-event";
+
+            const labelSpan = document.createElement("span");
+            labelSpan.className = "upcoming-label";
+            labelSpan.textContent = "直近予定：";
+
+            const textSpan = document.createElement("span");
+            textSpan.className = "upcoming-text";
+            textSpan.textContent = "[" + upcomingEvent.type + "] " + upcomingEvent.title + " (" + formatEventDateTime(upcomingEvent) + ")";
+
+            upcomingP.appendChild(labelSpan);
+            upcomingP.appendChild(textSpan);
+            article.appendChild(upcomingP);
+        }
+
         const actionsDiv = document.createElement("div");
         actionsDiv.className = "card-actions";
+
+        // 予定管理ボタン群 (Phase 1)
+        const companyEvents = typeof getEventsByCompanyId === "function" ? getEventsByCompanyId(company.id) : [];
+
+        const viewEventsBtn = document.createElement("button");
+        viewEventsBtn.type = "button";
+        viewEventsBtn.className = "btn btn-sm btn-event-view";
+        viewEventsBtn.textContent = "📅 予定 (" + companyEvents.length + ")";
+        viewEventsBtn.addEventListener("click", function () {
+            openEventListModal(company);
+        });
+        actionsDiv.appendChild(viewEventsBtn);
+
+        const addEventBtn = document.createElement("button");
+        addEventBtn.type = "button";
+        addEventBtn.className = "btn btn-sm btn-event-add";
+        addEventBtn.textContent = "＋ 予定追加";
+        addEventBtn.addEventListener("click", function () {
+            openEventFormModal(company);
+        });
+        actionsDiv.appendChild(addEventBtn);
 
         if (company.myPageUrl) {
             const myPageLink = document.createElement("a");
@@ -186,7 +226,7 @@ function renderCompanies() {
 
         deleteButton.addEventListener("click", function () {
             const confirmed = confirm(
-                company.name + " を削除しますか？"
+                company.name + " を削除しますか？\n紐づく予定データもすべて削除されます。"
             );
 
             if (!confirmed) {
@@ -203,6 +243,11 @@ function renderCompanies() {
                 JSON.stringify(updatedCompanies)
             );
 
+            // 紐づく予定もカスケード削除
+            if (typeof deleteEventsByCompanyId === "function") {
+                deleteEventsByCompanyId(company.id);
+            }
+
             renderCompanies();
         });
 
@@ -210,6 +255,280 @@ function renderCompanies() {
         article.appendChild(actionsDiv);
 
         companyList.appendChild(article);
+    });
+}
+
+/* ===================================================
+   予定モーダル管理 (Phase 1)
+   =================================================== */
+
+const eventFormModal = document.getElementById("event-form-modal");
+const eventListModal = document.getElementById("event-list-modal");
+const eventForm = document.getElementById("event-form");
+const eventAllDayCheckbox = document.getElementById("event-all-day");
+const eventStartInput = document.getElementById("event-start");
+const eventEndInput = document.getElementById("event-end");
+
+let activeModalCompany = null;
+
+// 終日チェックボックス切り替えハンドラ
+if (eventAllDayCheckbox && eventStartInput && eventEndInput) {
+    eventAllDayCheckbox.addEventListener("change", function () {
+        const isAllDay = this.checked;
+        const currentStart = eventStartInput.value;
+        const currentEnd = eventEndInput.value;
+
+        if (isAllDay) {
+            eventStartInput.type = "date";
+            eventEndInput.type = "date";
+            if (currentStart) eventStartInput.value = currentStart.split("T")[0];
+            if (currentEnd) eventEndInput.value = currentEnd.split("T")[0];
+        } else {
+            eventStartInput.type = "datetime-local";
+            eventEndInput.type = "datetime-local";
+            if (currentStart && !currentStart.includes("T")) {
+                eventStartInput.value = currentStart + "T09:00";
+            }
+            if (currentEnd && !currentEnd.includes("T")) {
+                eventEndInput.value = currentEnd + "T10:00";
+            }
+        }
+    });
+}
+
+// 予定登録・編集モーダルを開く
+function openEventFormModal(company, eventToEdit = null) {
+    if (!eventFormModal || !company) return;
+    activeModalCompany = company;
+
+    document.getElementById("event-company-id").value = company.id;
+    document.getElementById("event-company-name-display").textContent = company.name;
+
+    const modalTitle = document.getElementById("event-modal-title");
+    const idInput = document.getElementById("event-id");
+    const typeSelect = document.getElementById("event-type");
+    const titleInput = document.getElementById("event-title");
+    const locationInput = document.getElementById("event-location");
+    const memoTextarea = document.getElementById("event-memo");
+
+    if (eventToEdit) {
+        modalTitle.textContent = "予定を編集";
+        idInput.value = eventToEdit.id;
+        typeSelect.value = eventToEdit.type || "面接";
+        titleInput.value = eventToEdit.title || "";
+        locationInput.value = eventToEdit.location || "";
+        memoTextarea.value = eventToEdit.memo || "";
+
+        eventAllDayCheckbox.checked = Boolean(eventToEdit.allDay);
+        if (eventToEdit.allDay) {
+            eventStartInput.type = "date";
+            eventEndInput.type = "date";
+            eventStartInput.value = eventToEdit.start ? eventToEdit.start.split("T")[0] : "";
+            eventEndInput.value = eventToEdit.end ? eventToEdit.end.split("T")[0] : "";
+        } else {
+            eventStartInput.type = "datetime-local";
+            eventEndInput.type = "datetime-local";
+            eventStartInput.value = eventToEdit.start || "";
+            eventEndInput.value = eventToEdit.end || "";
+        }
+    } else {
+        modalTitle.textContent = "予定を追加";
+        idInput.value = "";
+        typeSelect.value = "面接";
+        titleInput.value = "";
+        locationInput.value = "";
+        memoTextarea.value = "";
+
+        eventAllDayCheckbox.checked = false;
+        eventStartInput.type = "datetime-local";
+        eventEndInput.type = "datetime-local";
+
+        // デフォルト値: 明日の10:00〜11:00
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yyyy = tomorrow.getFullYear();
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, "0");
+        const dd = String(tomorrow.getDate()).padStart(2, "0");
+        eventStartInput.value = `${yyyy}-${mm}-${dd}T10:00`;
+        eventEndInput.value = `${yyyy}-${mm}-${dd}T11:00`;
+    }
+
+    eventFormModal.showModal();
+}
+
+// 予定一覧モーダルを開く
+function openEventListModal(company) {
+    if (!eventListModal || !company) return;
+    activeModalCompany = company;
+
+    document.getElementById("event-list-company-name").textContent = company.name;
+    renderModalEvents(company);
+
+    const modalAddBtn = document.getElementById("modal-add-event-btn");
+    if (modalAddBtn) {
+        modalAddBtn.onclick = function () {
+            openEventFormModal(company);
+        };
+    }
+
+    eventListModal.showModal();
+}
+
+// 予定一覧モーダルの中身を描画
+function renderModalEvents(company) {
+    const container = document.getElementById("modal-events-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+    const events = typeof getEventsByCompanyId === "function" ? getEventsByCompanyId(company.id) : [];
+
+    if (events.length === 0) {
+        const emptyMsg = document.createElement("p");
+        emptyMsg.className = "modal-empty-message";
+        emptyMsg.textContent = "登録されている予定はありません。";
+        container.appendChild(emptyMsg);
+        return;
+    }
+
+    events.forEach(function (event) {
+        const item = document.createElement("div");
+        item.className = "event-item";
+
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "event-item-header";
+
+        const typeBadge = document.createElement("span");
+        typeBadge.className = "event-type-badge type-" + event.type;
+        typeBadge.textContent = event.type;
+
+        const titleSpan = document.createElement("h4");
+        titleSpan.className = "event-item-title";
+        titleSpan.textContent = event.title;
+
+        headerDiv.appendChild(typeBadge);
+        headerDiv.appendChild(titleSpan);
+
+        const timeP = document.createElement("p");
+        timeP.className = "event-item-meta";
+        timeP.textContent = "🕒 " + formatEventDateTime(event);
+
+        item.appendChild(headerDiv);
+        item.appendChild(timeP);
+
+        if (event.location) {
+            const locP = document.createElement("p");
+            locP.className = "event-item-meta";
+            locP.textContent = "📍 " + event.location;
+            item.appendChild(locP);
+        }
+
+        if (event.memo) {
+            const memoP = document.createElement("p");
+            memoP.className = "event-item-memo";
+            memoP.textContent = event.memo;
+            item.appendChild(memoP);
+        }
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "event-item-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "btn btn-sm btn-edit";
+        editBtn.textContent = "編集";
+        editBtn.addEventListener("click", function () {
+            openEventFormModal(company, event);
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn btn-sm btn-delete";
+        delBtn.textContent = "削除";
+        delBtn.addEventListener("click", function () {
+            const ok = confirm("予定「" + event.title + "」を削除しますか？");
+            if (ok) {
+                deleteEvent(event.id);
+                renderModalEvents(company);
+                renderCompanies();
+            }
+        });
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        item.appendChild(actionsDiv);
+
+        container.appendChild(item);
+    });
+}
+
+// フォーム送信ハンドラ
+if (eventForm) {
+    eventForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const idVal = document.getElementById("event-id").value;
+        const eventData = {
+            id: idVal ? Number(idVal) : undefined,
+            companyId: document.getElementById("event-company-id").value,
+            type: document.getElementById("event-type").value,
+            title: document.getElementById("event-title").value,
+            allDay: eventAllDayCheckbox ? eventAllDayCheckbox.checked : false,
+            start: eventStartInput.value,
+            end: eventEndInput.value,
+            location: document.getElementById("event-location").value,
+            memo: document.getElementById("event-memo").value
+        };
+
+        if (typeof saveEvent === "function") {
+            saveEvent(eventData);
+        }
+
+        if (eventFormModal) {
+            eventFormModal.close();
+        }
+
+        if (eventListModal && eventListModal.open && activeModalCompany) {
+            renderModalEvents(activeModalCompany);
+        }
+
+        renderCompanies();
+    });
+}
+
+// モーダル閉じるボタンのイベント
+const closeFormBtn = document.getElementById("close-event-form-btn");
+const cancelFormBtn = document.getElementById("cancel-event-form-btn");
+if (closeFormBtn && eventFormModal) {
+    closeFormBtn.addEventListener("click", function () {
+        eventFormModal.close();
+    });
+}
+if (cancelFormBtn && eventFormModal) {
+    cancelFormBtn.addEventListener("click", function () {
+        eventFormModal.close();
+    });
+}
+
+const closeListBtn = document.getElementById("close-event-list-btn");
+if (closeListBtn && eventListModal) {
+    closeListBtn.addEventListener("click", function () {
+        eventListModal.close();
+    });
+}
+
+// 背景クリックで閉じる
+if (eventFormModal) {
+    eventFormModal.addEventListener("click", function (e) {
+        if (e.target === eventFormModal) {
+            eventFormModal.close();
+        }
+    });
+}
+if (eventListModal) {
+    eventListModal.addEventListener("click", function (e) {
+        if (e.target === eventListModal) {
+            eventListModal.close();
+        }
     });
 }
 
